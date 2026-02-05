@@ -30,6 +30,9 @@ export function buildEnvVars(env: MoltbotEnv): Record<string, string> {
   if (!envVars.OPENAI_API_KEY && env.OPENAI_API_KEY) {
     envVars.OPENAI_API_KEY = env.OPENAI_API_KEY;
   }
+  if (!envVars.OPENAI_API_KEY && env.OPENROUTER_API_KEY) {
+    envVars.OPENAI_API_KEY = env.OPENROUTER_API_KEY;
+  }
 
   // Pass base URL (used by start-moltbot.sh to determine provider)
   if (normalizedBaseUrl) {
@@ -42,7 +45,13 @@ export function buildEnvVars(env: MoltbotEnv): Record<string, string> {
     }
   } else if (env.ANTHROPIC_BASE_URL) {
     envVars.ANTHROPIC_BASE_URL = env.ANTHROPIC_BASE_URL;
+  } else if (env.OPENAI_BASE_URL) {
+    envVars.OPENAI_BASE_URL = env.OPENAI_BASE_URL;
   }
+  // Custom model name overrides
+  if (env.ANTHROPIC_DEFAULT_HAIKU_MODEL) envVars.ANTHROPIC_DEFAULT_HAIKU_MODEL = env.ANTHROPIC_DEFAULT_HAIKU_MODEL;
+  if (env.ANTHROPIC_DEFAULT_SONNET_MODEL) envVars.ANTHROPIC_DEFAULT_SONNET_MODEL = env.ANTHROPIC_DEFAULT_SONNET_MODEL;
+  if (env.ANTHROPIC_DEFAULT_OPUS_MODEL) envVars.ANTHROPIC_DEFAULT_OPUS_MODEL = env.ANTHROPIC_DEFAULT_OPUS_MODEL;
   // Map MOLTBOT_GATEWAY_TOKEN to CLAWDBOT_GATEWAY_TOKEN (container expects this name)
   if (env.MOLTBOT_GATEWAY_TOKEN) envVars.CLAWDBOT_GATEWAY_TOKEN = env.MOLTBOT_GATEWAY_TOKEN;
   if (env.DEV_MODE) envVars.CLAWDBOT_DEV_MODE = env.DEV_MODE; // Pass DEV_MODE as CLAWDBOT_DEV_MODE to container

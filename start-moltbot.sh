@@ -226,10 +226,11 @@ if (process.env.SLACK_BOT_TOKEN && process.env.SLACK_APP_TOKEN) {
 // Usage: Set AI_GATEWAY_BASE_URL or ANTHROPIC_BASE_URL to your endpoint like:
 //   https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_id}/anthropic
 //   https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_id}/openai
-const baseUrl = (process.env.AI_GATEWAY_BASE_URL || process.env.ANTHROPIC_BASE_URL || '').replace(/\/+$/, '');
-const isOpenAI = baseUrl.endsWith('/openai');
+const baseUrl = (process.env.AI_GATEWAY_BASE_URL || process.env.OPENAI_BASE_URL || process.env.ANTHROPIC_BASE_URL || '').replace(/\/+$/, '');
+const isOpenAI = baseUrl.endsWith('/openai') || baseUrl.includes('openrouter.ai');
 
 if (isOpenAI) {
+    const isOpenRouter = baseUrl.includes('openrouter.ai');
     // Create custom openai provider config with baseUrl override
     // Omit apiKey so moltbot falls back to OPENAI_API_KEY env var
     console.log('Configuring OpenAI provider with base URL:', baseUrl);
@@ -238,19 +239,39 @@ if (isOpenAI) {
     config.models.providers.openai = {
         baseUrl: baseUrl,
         api: 'openai-responses',
-        models: [
-            { id: 'gpt-5.2', name: 'GPT-5.2', contextWindow: 200000 },
-            { id: 'gpt-5', name: 'GPT-5', contextWindow: 200000 },
-            { id: 'gpt-4.5-preview', name: 'GPT-4.5 Preview', contextWindow: 128000 },
-        ]
+        models: isOpenRouter
+            ? [
+                { id: 'google/gemini-3-flash-preview', name: 'google/gemini-3-flash-preview', contextWindow: 128000 },
+                { id: 'moonshotai/kimi-k2.5', name: 'moonshotai/kimi-k2.5', contextWindow: 200000 },
+                { id: 'minimax/minimax-m2.1', name: 'minimax/minimax-m2.1', contextWindow: 200000 },
+                { id: 'z-ai/glm-4.7', name: 'z-ai/glm-4.7', contextWindow: 200000 },
+                { id: 'z-ai/glm-4.5-air:free', name: 'z-ai/glm-4.5-air:free', contextWindow: 128000 },
+            ]
+            : [
+                { id: 'gpt-5.2', name: 'GPT-5.2', contextWindow: 200000 },
+                { id: 'gpt-5', name: 'GPT-5', contextWindow: 200000 },
+                { id: 'gpt-4.5-preview', name: 'GPT-4.5 Preview', contextWindow: 128000 },
+            ]
     };
     // Add models to the allowlist so they appear in /models
     config.agents.defaults.models = config.agents.defaults.models || {};
-    config.agents.defaults.models['openai/gpt-5.2'] = { alias: 'GPT-5.2' };
-    config.agents.defaults.models['openai/gpt-5'] = { alias: 'GPT-5' };
-    config.agents.defaults.models['openai/gpt-4.5-preview'] = { alias: 'GPT-4.5' };
-    config.agents.defaults.model.primary = 'openai/gpt-5.2';
+    if (isOpenRouter) {
+        config.agents.defaults.models['openai/google/gemini-3-flash-preview'] = { alias: 'Gemini 3 Flash' };
+        config.agents.defaults.models['openai/moonshotai/kimi-k2.5'] = { alias: 'Kimi K2.5' };
+        config.agents.defaults.models['openai/minimax/minimax-m2.1'] = { alias: 'Minimax M2.1' };
+        config.agents.defaults.models['openai/z-ai/glm-4.7'] = { alias: 'GLM 4.7' };
+        config.agents.defaults.models['openai/z-ai/glm-4.5-air:free'] = { alias: 'GLM 4.5 Air (Free)' };
+        config.agents.defaults.model.primary = 'openai/google/gemini-3-flash-preview';
+    } else {
+        config.agents.defaults.models['openai/gpt-5.2'] = { alias: 'GPT-5.2' };
+        config.agents.defaults.models['openai/gpt-5'] = { alias: 'GPT-5' };
+        config.agents.defaults.models['openai/gpt-4.5-preview'] = { alias: 'GPT-4.5' };
+        config.agents.defaults.model.primary = 'openai/gpt-5.2';
+    }
 } else if (baseUrl) {
+    const opusModel = process.env.ANTHROPIC_DEFAULT_OPUS_MODEL || 'claude-opus-4-5-20251101';
+    const sonnetModel = process.env.ANTHROPIC_DEFAULT_SONNET_MODEL || 'claude-sonnet-4-5-20250929';
+    const haikuModel = process.env.ANTHROPIC_DEFAULT_HAIKU_MODEL || 'claude-haiku-4-5-20251001';
     console.log('Configuring Anthropic provider with base URL:', baseUrl);
     config.models = config.models || {};
     config.models.providers = config.models.providers || {};
@@ -258,9 +279,9 @@ if (isOpenAI) {
         baseUrl: baseUrl,
         api: 'anthropic-messages',
         models: [
-            { id: 'claude-opus-4-5-20251101', name: 'Claude Opus 4.5', contextWindow: 200000 },
-            { id: 'claude-sonnet-4-5-20250929', name: 'Claude Sonnet 4.5', contextWindow: 200000 },
-            { id: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5', contextWindow: 200000 },
+            { id: opusModel, name: opusModel, contextWindow: 200000 },
+            { id: sonnetModel, name: sonnetModel, contextWindow: 200000 },
+            { id: haikuModel, name: haikuModel, contextWindow: 200000 },
         ]
     };
     // Include API key in provider config if set (required when using custom baseUrl)
@@ -270,10 +291,10 @@ if (isOpenAI) {
     config.models.providers.anthropic = providerConfig;
     // Add models to the allowlist so they appear in /models
     config.agents.defaults.models = config.agents.defaults.models || {};
-    config.agents.defaults.models['anthropic/claude-opus-4-5-20251101'] = { alias: 'Opus 4.5' };
-    config.agents.defaults.models['anthropic/claude-sonnet-4-5-20250929'] = { alias: 'Sonnet 4.5' };
-    config.agents.defaults.models['anthropic/claude-haiku-4-5-20251001'] = { alias: 'Haiku 4.5' };
-    config.agents.defaults.model.primary = 'anthropic/claude-opus-4-5-20251101';
+    config.agents.defaults.models['anthropic/' + opusModel] = { alias: 'Opus' };
+    config.agents.defaults.models['anthropic/' + sonnetModel] = { alias: 'Sonnet' };
+    config.agents.defaults.models['anthropic/' + haikuModel] = { alias: 'Haiku' };
+    config.agents.defaults.model.primary = 'anthropic/' + opusModel;
 } else {
     // Default to Anthropic without custom base URL (uses built-in pi-ai catalog)
     config.agents.defaults.model.primary = 'anthropic/claude-opus-4-5';

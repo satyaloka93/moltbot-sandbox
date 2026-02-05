@@ -355,6 +355,27 @@ npm run deploy
 
 The `AI_GATEWAY_*` variables take precedence over `ANTHROPIC_*` if both are set.
 
+### Custom Anthropic Model IDs
+
+If you're using an Anthropic-compatible endpoint and need different model IDs, you can override the default Opus/Sonnet/Haiku IDs:
+
+```bash
+npx wrangler secret put ANTHROPIC_DEFAULT_OPUS_MODEL
+npx wrangler secret put ANTHROPIC_DEFAULT_SONNET_MODEL
+npx wrangler secret put ANTHROPIC_DEFAULT_HAIKU_MODEL
+```
+
+### OpenRouter (OpenAI-compatible)
+
+OpenRouter is OpenAI-compatible. To use it, set the OpenAI base URL and API key, then redeploy:
+
+```bash
+npx wrangler secret put OPENAI_BASE_URL
+# Enter: https://openrouter.ai/api/v1
+
+npx wrangler secret put OPENROUTER_API_KEY
+```
+
 ## All Secrets Reference
 
 | Secret | Required | Description |
@@ -363,7 +384,12 @@ The `AI_GATEWAY_*` variables take precedence over `ANTHROPIC_*` if both are set.
 | `AI_GATEWAY_BASE_URL` | Yes* | AI Gateway endpoint URL (required when using `AI_GATEWAY_API_KEY`) |
 | `ANTHROPIC_API_KEY` | Yes* | Direct Anthropic API key (fallback if AI Gateway not configured) |
 | `ANTHROPIC_BASE_URL` | No | Direct Anthropic API base URL (fallback) |
+| `ANTHROPIC_DEFAULT_OPUS_MODEL` | No | Override the default Anthropic "Opus" model ID (Anthropic-compatible endpoints) |
+| `ANTHROPIC_DEFAULT_SONNET_MODEL` | No | Override the default Anthropic "Sonnet" model ID (Anthropic-compatible endpoints) |
+| `ANTHROPIC_DEFAULT_HAIKU_MODEL` | No | Override the default Anthropic "Haiku" model ID (Anthropic-compatible endpoints) |
+| `OPENAI_BASE_URL` | No | OpenAI-compatible base URL override (e.g., OpenRouter) |
 | `OPENAI_API_KEY` | No | OpenAI API key (alternative provider) |
+| `OPENROUTER_API_KEY` | No | OpenRouter API key (mapped to `OPENAI_API_KEY` when set) |
 | `CF_ACCESS_TEAM_DOMAIN` | Yes* | Cloudflare Access team domain (required for admin UI) |
 | `CF_ACCESS_AUD` | Yes* | Cloudflare Access application audience (required for admin UI) |
 | `MOLTBOT_GATEWAY_TOKEN` | Yes | Gateway token for authentication (pass via `?token=` query param) |

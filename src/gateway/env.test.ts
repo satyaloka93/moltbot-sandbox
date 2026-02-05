@@ -85,6 +85,18 @@ describe('buildEnvVars', () => {
     expect(result.OPENAI_API_KEY).toBe('sk-openai-key');
   });
 
+  it('maps OPENROUTER_API_KEY to OPENAI_API_KEY when set', () => {
+    const env = createMockEnv({ OPENROUTER_API_KEY: 'sk-openrouter-key' });
+    const result = buildEnvVars(env);
+    expect(result.OPENAI_API_KEY).toBe('sk-openrouter-key');
+  });
+
+  it('passes OPENAI_BASE_URL when set directly (no gateway)', () => {
+    const env = createMockEnv({ OPENAI_BASE_URL: 'https://openrouter.ai/api/v1' });
+    const result = buildEnvVars(env);
+    expect(result.OPENAI_BASE_URL).toBe('https://openrouter.ai/api/v1');
+  });
+
   it('maps MOLTBOT_GATEWAY_TOKEN to CLAWDBOT_GATEWAY_TOKEN for container', () => {
     const env = createMockEnv({ MOLTBOT_GATEWAY_TOKEN: 'my-token' });
     const result = buildEnvVars(env);
